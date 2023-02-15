@@ -18,7 +18,7 @@ export class Movies {
     private actorsFromMovie: string[],
     private year: string | number,
     private plot: string,
-    private genero: string[],
+    private genre: string[],
     private runtime: string,
     private directors: string[]
   ) {}

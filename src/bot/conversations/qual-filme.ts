@@ -1,4 +1,8 @@
-import { GameController, MoviesController } from "../../controllers/";
+import {
+  GameController,
+  IMDBController,
+  MoviesController,
+} from "../../controllers/";
 import { Movies } from "../../models/Movies";
 import { MyContext, MyConversation } from "../../types";
 
@@ -16,11 +20,9 @@ export async function qualFilme(conv: MyConversation, ctx: MyContext) {
   // await ctx.reply("Digite um ano que deseja buscar um filme.");
   // const year = await conv.form.number();
   await ctx.reply("Opa, bora ver se vocês adivinham qual filme que é.");
-  const movie: Movies = await conv.external(async () => {
-    return await fetch(`http://localhost:3010/movie`, {
-      method: "GET",
-    }).then((d) => d.json());
-  });
+  const movie: Movies = (await conv.external(async () => {
+    return IMDBController.getRandomMovieFromTop250();
+  })) as Movies;
   conv.log(movie);
   const dicas: string[] = [];
 
@@ -33,74 +35,63 @@ export async function qualFilme(conv: MyConversation, ctx: MyContext) {
   await ctx.reply("Qual seu chute?");
   let chute = await conv.form.text();
   chute = chute.replace("/qualfilme@mg_rnf_bot", "");
-  let ganhou =
-    movie.movieName.trim().toLowerCase() === chute.trim().toLowerCase()
-      ? true
-      : false;
+  let ganhou = GameController.acertouOFilme(movie, chute);
   conv.log("Chute: ", chute, "  Movie Name: ", movie.movieName);
-
   if (ganhou) {
     await ctx.reply("Ganhou");
     await ctx.replyWithPhoto(movie.imageUrl);
     return;
   }
-  movie.movieName.trim().toLowerCase().includes(chute.trim().toLowerCase())
-    ? ctx.reply("Não acertou completamente, mas foi quase")
-    : ctx.reply("Não acertou, vamos tentar novamente");
-  let i = 0;
-
+  await ctx.reply(GameController.acertouAlgumaParteDoNome(movie, chute));
   while (true) {
+    // Pega uma dica aqui
     dica = await conv.external(async () => {
       return GameController.pegaDica(movie);
     });
-    i = 0;
-    // conv.log(dicas.includes(dica));
+    //uma variavel para impedir loop infinito no segundo while
+    let impedirLoopInfinito = 0;
+    // Testa se a dica que foi pegue acima já existe no Vetor com dicas
     while (dicas.includes(dica)) {
-      i++;
+      //Se existir a dica entra no loop e já testa se a quantidade de dicas é a mesma de possíveis dicas >> +2(para não pegar os dados da posição [0] = id [1] = nome [2] = imagem)
       if (dicas.length + 2 === Object.keys(movie).length) {
-        console.log(
-          "if pra saber se a quantidade de dicas é == quantidade de keys"
-        );
+        //se as dicas acabaram e não adivinhou termina o jogo
         await ctx.reply("Não conseguiu adivinhar e acabaram as dicas");
         await ctx.reply(`O Filme era: ${movie.movieName}`);
         await ctx.replyWithPhoto(movie.imageUrl);
         return false;
       }
+      //caso ainda tenham dicas pega uma outra dica e testa novamente se essa nova dica tá dentro de dicas[]
+
       dica = await conv.external(async () => {
         return GameController.pegaDica(movie);
       });
-      if (i > 100) {
+      impedirLoopInfinito++;
+      if (impedirLoopInfinito > 100) {
+        //para impedir um possível loop infinito
         ctx.reply("Erro no código");
         return "erro";
       }
     }
-
-    i = 0;
+    // Se passar pelo loop de teste se a dica já foi passada continua aqui
     await ctx.reply("A nova dica é");
     await ctx.reply(dica);
+    //coloca a dica no vetor dicas para futuros testes
     dicas.push(dica);
-
+    //pede um novo chute
     await ctx.reply("Qual seu novo chute?");
     chute = await conv.form.text();
+    //Caso seja mensagem do grupo retira a string inicial
     chute = chute.replace("/qualfilme@mg_rnf_bot", "");
-    ganhou =
-      movie.movieName.trim().toLowerCase() === chute.trim().toLowerCase()
-        ? true
-        : false;
+    //testa o chute
+    ganhou = GameController.acertouOFilme(movie, chute);
     conv.log("Chute:", chute, "  Movie Name:", movie.movieName);
     if (ganhou) {
       await ctx.reply("Ganhou");
       await ctx.replyWithPhoto(movie.imageUrl);
       return;
     }
-    conv.log(movie.movieName.trim().toLowerCase());
-    conv.log(chute.trim().toLowerCase());
-    conv.log(
-      movie.movieName.trim().toLowerCase().includes(chute.trim().toLowerCase())
-    );
-    movie.movieName.trim().toLowerCase().includes(chute.trim().toLowerCase())
-      ? ctx.reply("Não acertou completamente, mas foi quase")
-      : ctx.reply("Não acertou, vamos tentar novamente");
+    //testa se acertou parcialmente
+    await ctx.reply(GameController.acertouAlgumaParteDoNome(movie, chute));
   }
 
   // jaFoi.push(dica);

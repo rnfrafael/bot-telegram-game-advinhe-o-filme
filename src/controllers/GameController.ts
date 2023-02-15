@@ -2,10 +2,19 @@ import { Movies } from "../models/Movies";
 
 class GameController {
   static acertouOFilme(movie: Movies, chute: string): boolean {
-    if (chute === movie.movieName) {
+    if (movie.movieName.trim().toLowerCase() === chute.trim().toLowerCase()) {
       return true;
     }
     return false;
+  }
+  static acertouAlgumaParteDoNome(movie: Movies, chute: string): string {
+    if (
+      movie.movieName.trim().toLowerCase().includes(chute.trim().toLowerCase())
+    ) {
+      return "Não acertou completamente, mas foi quase";
+    }
+
+    return "Não acertou, vamos tentar novamente";
   }
 
   static pegaDica(movie: Movies): string {
@@ -13,10 +22,7 @@ class GameController {
     const keys = Object.keys(movie);
     const k = Math.floor(Math.random() * (keys.length - 4 + 1)) + 3;
     let chave: string | undefined;
-    // console.log("pega dica chaves e numero");
-    // console.log(keys);
-    // console.log(k);
-    // console.log(keys[k]);
+
     switch (keys[k]) {
       case "actorsFromMovie":
         chave = "Atores do Filme";

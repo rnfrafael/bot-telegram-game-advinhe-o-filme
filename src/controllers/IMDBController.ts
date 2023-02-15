@@ -9,6 +9,7 @@ class IMDBController {
   constructor(app: FastifyInstance) {
     this.app = app;
   }*/
+  private async pegaDadosFilmes() {}
 
   //Pegar filme aleatório
   static async getRandomMovieFromYear(
@@ -30,7 +31,7 @@ class IMDBController {
         year,
         plot,
         image,
-        genero,
+        genre,
         runtime,
         directors,
       } = await fetch(
@@ -43,7 +44,7 @@ class IMDBController {
         year,
         plot,
         image,
-        genero,
+        genre,
         runtime,
         directors
       );
