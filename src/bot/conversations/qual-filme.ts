@@ -32,6 +32,7 @@ export async function qualFilme(conv: MyConversation, ctx: MyContext) {
   await ctx.reply(dica);
   await ctx.reply("Qual seu chute?");
   let chute = await conv.form.text();
+  chute = chute.replace("/qualfilme@mg_rnf_bot", "");
   let ganhou =
     movie.movieName.trim().toLowerCase() === chute.trim().toLowerCase()
       ? true
@@ -81,7 +82,8 @@ export async function qualFilme(conv: MyConversation, ctx: MyContext) {
 
     await ctx.reply("Qual seu novo chute?");
     chute = await conv.form.text();
-    ganhou = ganhou =
+    chute = chute.replace("/qualfilme@mg_rnf_bot", "");
+    ganhou =
       movie.movieName.trim().toLowerCase() === chute.trim().toLowerCase()
         ? true
         : false;
